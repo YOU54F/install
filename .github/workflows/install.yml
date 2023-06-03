@@ -18,8 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run : |
-          which ruby
           ruby --version
+          sudo rm -rf /usr/bin/ruby
+          which brew && brew --version
           # rm -rf $HOME/linuxbrew
           sudo apt-get --purge remove ruby-full
         if: runner.os == 'Linux'
