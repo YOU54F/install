@@ -25,7 +25,7 @@ jobs:
       - name: remove system installed linuxbrew
         run : |
           /home/linuxbrew/.linuxbrew/bin/brew --version
-          rm -rf /home/linuxbrew
+          sudo rm -rf /home/linuxbrew
       - run: |
           /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v ${{ matrix.ruby-version }}
         name: install traveling-ruby ${{ matrix.ruby-version }} via ${{ matrix.shell }}
