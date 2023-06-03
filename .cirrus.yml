@@ -1,0 +1,44 @@
+
+ruby_test_script: &ruby_test_script |
+  uname -a
+  ruby --version
+  gem --version
+
+install_homebrew_script: &install_homebrew_script |
+  export PATH=/home/linuxbrew/.linuxbrew/bin:${PATH}
+  echo "PATH=${PATH}" >>$CIRRUS_ENV
+  if [ "$(uname -m)" == "aarch64" ]; then
+    echo "Installing Homebrew for Linux aarch64"
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/you54f/install/HEAD/install.sh)" || true
+    echo "Homebrew installed"
+    /home/linuxbrew/.linuxbrew/bin/brew --version
+    brew --version
+  else
+    echo "Installing Homebrew"
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/you54f/install/HEAD/install.sh)" || true
+    echo "Homebrew installed"
+    brew --version
+  fi
+
+test_homebrew_script: &test_homebrew_script |
+  brew install you54f/pact/pact-plugin-cli
+  brew info you54f/pact/pact-plugin-cli
+  pact-plugin-cli --help
+
+run_commands: &run_commands
+  # curl required for downloader, build-essential/git required for linuxbrew
+  pre_req_script: apt update && apt install --yes curl build-essential git 
+  cli_install_script: /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v 2.6.10
+  ruby_test_script: *ruby_test_script
+  install_homebrew_script: *install_homebrew_script
+  test_homebrew_script: *test_homebrew_script
+
+cli_arm_task:
+  arm_container:
+    image: ubuntu:22.04
+  <<: *run_commands
+
+cli_amd_task:
+  container:
+    image: ubuntu:22.04
+  <<: *run_commands
