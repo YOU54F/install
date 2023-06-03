@@ -18,7 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run : |
-          rm -rf $HOME/linuxbrew
+          ruby --version
+          # rm -rf $HOME/linuxbrew
           apt-get uninstall --yes ruby-full
         if: runner.os == 'Linux'
       - run: |
