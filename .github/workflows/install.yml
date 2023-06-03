@@ -33,8 +33,9 @@ jobs:
         name: ruby --version via ${{ matrix.shell }}
       - name: install homebrew
         run: |
-          export PATH=/home/linuxbrew/.linuxbrew/bin:${PATH}
+          export PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin
           echo "PATH=${PATH}" >>$GITHUB_ENV
+          echo $PATH
           NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/you54f/install/HEAD/install.sh)" || true
           echo "Homebrew installed"
           brew --version
