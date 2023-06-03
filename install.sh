@@ -527,11 +527,11 @@ EOS
   elif [[ "${UNAME_MACHINE}" != "x86_64" && "${UNAME_MACHINE}" != "aarch64" ]]
   then
     abort "$(
-    cat <<EOABORT
+      cat <<EOABORT
 Homebrew on Linux is only officially supported on Intel processors!
 and unofficially supported on aarch64 processors!
 EOABORT
-  )"
+    )"
   fi
 fi
 
