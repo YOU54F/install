@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
-          ./bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v ${{ matrix.ruby-version }}
+          /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v ${{ matrix.ruby-version }}
         name: install traveling-ruby ${{ matrix.ruby-version }} via ${{ matrix.shell }}
       - run: ruby --version
         name: ruby --version via ${{ matrix.shell }}
