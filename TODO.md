@@ -50,3 +50,13 @@ Steps to use your own Ruby with HomeBrew
    1. Note now using user provided Ruby
    2. No longer warning about suspicious remote
    3. Linux `aarch64` users will get message about unsupported CPU architecture.
+
+
+### Notes
+
+#### Running locally
+
+- Act
+  - Runner home path is different in GHA compared to Act
+    - Act `export PATH=/root/.travelling-ruby/bin:${PATH}`
+    - GHA `export PATH=/home/runner/.travelling-ruby/bin:${PATH}`

@@ -92,8 +92,8 @@ jobs:
 
           ## Cleanup
 
-          rm -rf /home/linuxbrew
-          rm -rf /root/.traveling-ruby
+          sudo rm -rf /home/linuxbrew
+          sudo rm -rf /root/.traveling-ruby
 
 
                    
