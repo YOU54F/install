@@ -128,7 +128,7 @@ jobs:
         # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#homebrew-note
       - run: |
             ## Setup Traveling Ruby & Linux Brew on Path
-            export PATH=/root/.travelling-ruby/bin:${PATH}:/home/linuxbrew/.linuxbrew/bin
+            export PATH=/home/runner/.travelling-ruby/bin/:${PATH}:/home/linuxbrew/.linuxbrew/bin
             echo "PATH=${PATH}" >>$GITHUB_ENV
       - name: Issue - HomeBrew does not use system ruby set first on PATH
         run: |
@@ -136,7 +136,7 @@ jobs:
           ## Install specified version of traveling-ruby
 
           /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v ${{ matrix.ruby-version }}
-          export PATH=/root/.travelling-ruby/bin:${PATH}
+          export PATH=/home/runner/.travelling-ruby/bin/:${PATH}
           ruby --version
           which ruby
 
