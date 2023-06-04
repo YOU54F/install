@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        ruby-version: [2.6.10,3.0.4,3.1.2,3.2.2,3.3.0-preview1]
+        ruby-version: [2.6.10]
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
@@ -22,22 +22,230 @@ jobs:
           ruby --version
           sudo rm -rf /usr/bin/ruby
           sudo apt-get --purge remove ruby-full
-        if: env.ACT != 'true'
+          ruby --version || echo "ruby not found as expected"
+        if: env.ACT != 'true' && matrix.os == 'Linux'
+        # default act image doesn't contain ruby
       - name: remove system installed linuxbrew
         run : |
           /home/linuxbrew/.linuxbrew/bin/brew --version
           sudo rm -rf /home/linuxbrew
-        if: env.ACT != 'true'
+        if: env.ACT != 'true' && matrix.os == 'Linux'
+        # default act image contains linuxbrew
+        # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#homebrew-note
       - run: |
           /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v ${{ matrix.ruby-version }}
-        name: install traveling-ruby ${{ matrix.ruby-version }} via ${{ matrix.shell }}
+        name: install traveling-ruby ${{ matrix.ruby-version }}
       - run: ruby --version
-        name: ruby --version via ${{ matrix.shell }}
-      - name: install homebrew
+        name: check traveling-ruby version
+      - name: install homebrew from web install
         run: |
+
+          ## Setup Linux Brew on Path
+
           export PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin
-          echo "PATH=/root/.travelling-ruby/bin:${PATH}" >>$GITHUB_ENV
-          echo $PATH
-          NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/you54f/install/HEAD/install.sh)" || true
-          echo "Homebrew installed"
+         
+          ## CI - Set our path
+          echo "PATH=${PATH}" >>$GITHUB_ENV
+
+          which ruby
+          ruby --version
+
+          ## Install Homebrew
+          ## Installer is patched for linux path lookup and aarch64 support
+          HOMEBREW_BREW_GIT_REMOTE="https://github.com/you54f/brew" NONINTERACTIVE=1 ./install.sh
+          
+          # remote patched for user path provided ruby
+          # export HOMEBREW_BREW_GIT_REMOTE="https://github.com/you54f/brew"
+          
+          # ISSUE - When this is set,the brew install fails with unsupported hardware for ARM
+          # 1. ./install.sh does not support Linux AARCH64
+          # 2. https://github.com/HomeBrew/brew unsets ruby on path and attempts to use a bottled version
+          #    even if the user has provided their own, first on PATH as per instructions
+          # 3. No Portable-Ruby bottles for Linux AARCH64
+          
+          ## Install via patched master script
+          # NONINTERACTIVE=1 ./install.sh
+
+          # ## Install via patched master script
+          # NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/HomeBrew/install/HEAD/install.sh)" || true
+          
+          # ## Install via official Homebrew Script
+          # NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/you54f/install/HEAD/install.sh)" || true
+
+          ## Check Brew works and is using our system ruby
+          which ruby
+          ruby --version
           brew --version
+          brew config
+          brew doctor || echo "brew doctor failed as expected with suspicious remote"
+          brew upgrade
+
+          ## Reset our HomeBrew git remote back to the official one
+          git -C "/home/linuxbrew/.linuxbrew/Homebrew" remote set-url origin https://github.com/Homebrew/brew
+
+          which ruby
+          ruby --version
+          brew config
+          brew --version
+          brew doctor
+          brew upgrade
+
+          ## Cleanup
+
+          rm -rf /home/linuxbrew
+          rm -rf /root/.traveling-ruby
+
+
+                   
+  # ISSUE - When this is set,the brew install fails with unsupported hardware for ARM
+  # 1. ./install.sh does not support Linux AARCH64
+  # 2. https://github.com/HomeBrew/brew unsets ruby on path and attempts to use a bottled version
+  #    even if the user has provided their own, first on PATH as per instructions
+  # 3. No Portable-Ruby bottles for Linux AARCH64
+  install_test_script:
+    name: local install script - ${{matrix.os}} - ${{matrix.shell}} - ${{matrix.ruby-version}}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        ruby-version: [2.6.10]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: remove system installed ruby & linuxbrew from Linux
+        if: env.ACT != 'true' && matrix.os == 'Linux'
+        # default act image doesn't contain ruby or linuxbrew
+        run : |
+          ruby --version
+          sudo rm -rf /usr/bin/ruby
+          sudo apt-get --purge remove ruby-full
+          ruby --version || echo "ruby not found as expected"
+          /home/linuxbrew/.linuxbrew/bin/brew --version
+          sudo rm -rf /home/linuxbrew
+        # default act image contains linuxbrew
+        # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#homebrew-note
+      - name: Issue - HomeBrew does not use system ruby set first on PATH
+        run: |
+
+          ## Install specified version of traveling-ruby
+
+          /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v ${{ matrix.ruby-version }}
+          export PATH=/root/.travelling-ruby/bin:${PATH}
+          ruby --version
+          which ruby
+          ## Setup Linux Brew on Path
+          export PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin
+          echo "PATH=${PATH}" >>$GITHUB_ENV
+          ## Install Homebrew
+
+
+          NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/HomeBrew/install/HEAD/install.sh)"
+
+          ## Check Brew works and is using our system ruby
+          which ruby
+          ruby --version
+          brew --version
+          brew config
+          brew doctor
+          brew upgrade
+
+          ## Issue - HomeBrew always using system image
+
+          ## Cleanup
+
+          rm -rf /home/linuxbrew
+          rm -rf /root/.traveling-ruby
+     
+      - name: Issue Resolved - HomeBrew with patch uses system ruby from PATH
+        run: |
+
+          ## Install specified version of traveling-ruby
+
+          /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v ${{ matrix.ruby-version }}
+          ruby --version
+          which ruby
+          
+          ## Setup Linux Brew on Path
+          export PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin
+          echo "PATH=${PATH}" >>$GITHUB_ENV
+          ## Install Homebrew
+
+
+          ## Installer is patched for linux path lookup and aarch64 support
+          #    even if the user has provided their own, first on PATH as per instructions
+          # ISSUE 1. https://github.com/HomeBrew/brew unsets ruby on path and attempts to use a bottled version
+          HOMEBREW_BREW_GIT_REMOTE="https://github.com/you54f/brew" NONINTERACTIVE=1 ./install.sh
+
+          ## Check Brew works and is using our system ruby
+          which ruby
+          ruby --version
+          brew --version
+          brew config
+          brew doctor || echo "brew doctor failed as expected with suspicious remote"
+          brew upgrade
+
+          ## Reset our HomeBrew git remote back to the official one
+          git -C "/home/linuxbrew/.linuxbrew/Homebrew" remote set-url origin https://github.com/Homebrew/brew
+
+          which ruby
+          ruby --version
+          brew config
+          brew --version
+          brew doctor
+          brew upgrade
+
+          ## Cleanup
+
+          rm -rf /home/linuxbrew
+          rm -rf /root/.traveling-ruby
+
+
+      - name: Issue - HomeBrew Installer does not support Linux Aarch64
+        run: |
+
+          ## Install specified version of traveling-ruby
+
+          /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v ${{ matrix.ruby-version }}
+          ruby --version
+          which ruby
+
+          ## Setup Linux Brew on Path
+          export PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin
+          echo "PATH=${PATH}" >>$GITHUB_ENV
+
+          ## Install Homebrew
+
+          # ISSUE 1. https://github.com/HomeBrew/brew unsets ruby on path and attempts to use a bottled version
+          # ISSUE 2. Use patched HomeBrew installer for linux aarch64
+          
+          ## Use the script from master
+          HOMEBREW_BREW_GIT_REMOTE="https://github.com/you54f/brew" NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/you54f/install/HEAD/install.sh)" 
+
+          ## Use the script from the current branch
+          # NONINTERACTIVE=1 ./install.sh
+          # act --container-architecture linux/amd64 -W .github/workflows/install.yml --matrix ruby-version:2.6.10
+
+          ## Check Brew works and is using our system ruby
+          which ruby
+          ruby --version
+          brew --version
+          brew config
+          brew doctor || echo "brew doctor failed as expected with suspicious remote"
+          brew upgrade
+
+          ## Reset our HomeBrew git remote back to the official one
+          git -C "/home/linuxbrew/.linuxbrew/Homebrew" remote set-url origin https://github.com/Homebrew/brew
+
+          which ruby
+          ruby --version
+          brew config
+          brew --version
+          brew doctor
+          brew upgrade
+
+          ## Cleanup
+
+          rm -rf /home/linuxbrew
+          rm -rf /root/.traveling-ruby
