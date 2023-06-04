@@ -115,7 +115,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: remove system installed ruby & linuxbrew from Linux
-        if: env.ACT != 'true' && matrix.os == 'Linux'
+        if: env.ACT != 'true' && runner.os == 'Linux'
         # default act image doesn't contain ruby or linuxbrew
         run : |
           ruby --version
