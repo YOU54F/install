@@ -103,7 +103,7 @@ jobs:
   #    even if the user has provided their own, first on PATH as per instructions
   # 3. No Portable-Ruby bottles for Linux AARCH64
   install_test_script:
-    name: install install script - ${{matrix.os}} - ${{matrix.ruby-version}}
+    name: install script - ${{matrix.os}} - ${{matrix.ruby-version}}
     timeout-minutes: 10
     strategy:
       matrix:
@@ -126,6 +126,10 @@ jobs:
           sudo rm -rf /home/linuxbrew
         # default act image contains linuxbrew
         # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#homebrew-note
+      - run: |
+            ## Setup Traveling Ruby & Linux Brew on Path
+            export PATH=/root/.travelling-ruby/bin:${PATH}:/home/linuxbrew/.linuxbrew/bin
+            echo "PATH=${PATH}" >>$GITHUB_ENV
       - name: Issue - HomeBrew does not use system ruby set first on PATH
         run: |
 
@@ -135,9 +139,7 @@ jobs:
           export PATH=/root/.travelling-ruby/bin:${PATH}
           ruby --version
           which ruby
-          ## Setup Linux Brew on Path
-          export PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin
-          echo "PATH=${PATH}" >>$GITHUB_ENV
+
           ## Install Homebrew
 
 
@@ -155,8 +157,8 @@ jobs:
 
           ## Cleanup
 
-          rm -rf /home/linuxbrew
-          rm -rf /root/.traveling-ruby
+          sudo rm -rf /home/linuxbrew
+          sudo rm -rf /root/.traveling-ruby
      
       - name: Issue Resolved - HomeBrew with patch uses system ruby from PATH
         run: |
@@ -198,8 +200,8 @@ jobs:
 
           ## Cleanup
 
-          rm -rf /home/linuxbrew
-          rm -rf /root/.traveling-ruby
+          sudo rm -rf /home/linuxbrew
+          sudo rm -rf /root/.traveling-ruby
 
 
       - name: Issue - HomeBrew Installer does not support Linux Aarch64
@@ -247,5 +249,5 @@ jobs:
 
           ## Cleanup
 
-          rm -rf /home/linuxbrew
-          rm -rf /root/.traveling-ruby
+          sudo rm -rf /home/linuxbrew
+          sudo rm -rf /root/.traveling-ruby
