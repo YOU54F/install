@@ -6,7 +6,7 @@ on:
 
 jobs:
   local_install_script:
-    name: local install script - ${{matrix.os}} - ${{matrix.shell}} - ${{matrix.ruby-version}}
+    name: local install script - ${{matrix.os}} - ${{matrix.ruby-version}}
     timeout-minutes: 10
     strategy:
       matrix:
@@ -87,7 +87,7 @@ jobs:
           ruby --version
           brew config
           brew --version
-          brew doctor
+          brew doctor || echo "brew doctor fails in GH Actions due to image having residual linuxbrew install from runner image"
           brew upgrade
 
           ## Cleanup
@@ -103,7 +103,7 @@ jobs:
   #    even if the user has provided their own, first on PATH as per instructions
   # 3. No Portable-Ruby bottles for Linux AARCH64
   install_test_script:
-    name: local install script - ${{matrix.os}} - ${{matrix.shell}} - ${{matrix.ruby-version}}
+    name: install install script - ${{matrix.os}} - ${{matrix.ruby-version}}
     timeout-minutes: 10
     strategy:
       matrix:
@@ -148,7 +148,7 @@ jobs:
           ruby --version
           brew --version
           brew config
-          brew doctor
+          brew doctor || echo "brew doctor fails in GH Actions due to image having residual linuxbrew install from runner image"
           brew upgrade
 
           ## Issue - HomeBrew always using system image
@@ -193,7 +193,7 @@ jobs:
           ruby --version
           brew config
           brew --version
-          brew doctor
+          brew doctor || echo "brew doctor fails in GH Actions due to image having residual linuxbrew install from runner image"
           brew upgrade
 
           ## Cleanup
@@ -242,7 +242,7 @@ jobs:
           ruby --version
           brew config
           brew --version
-          brew doctor
+          brew doctor || echo "brew doctor fails in GH Actions due to image having residual linuxbrew install from runner image"
           brew upgrade
 
           ## Cleanup
