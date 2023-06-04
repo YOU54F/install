@@ -23,13 +23,13 @@ jobs:
           sudo rm -rf /usr/bin/ruby
           sudo apt-get --purge remove ruby-full
           ruby --version || echo "ruby not found as expected"
-        if: env.ACT != 'true' && matrix.os == 'Linux'
+        if: env.ACT != 'true' && runner.os == 'Linux'
         # default act image doesn't contain ruby
       - name: remove system installed linuxbrew
         run : |
           /home/linuxbrew/.linuxbrew/bin/brew --version
           sudo rm -rf /home/linuxbrew
-        if: env.ACT != 'true' && matrix.os == 'Linux'
+        if: env.ACT != 'true' && runner.os == 'Linux'
         # default act image contains linuxbrew
         # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#homebrew-note
       - run: |
