@@ -507,15 +507,31 @@ else
   # On Linux, support only 64-bit Intel
   if [[ "${UNAME_MACHINE}" == "aarch64" ]]
   then
+    echo "$(
+      cat <<EOS
+Homebrew on Linux is not officially supported on ARM processors.
+  ${tty_underline}https://docs.brew.sh/Homebrew-on-Linux#arm-unsupported${tty_reset}
+
+Alternate support is provided by community sources.
+
+Aarch64 traveling-ruby linux builds
+  
+  - ${tty_underline}https://you54f/traveling-ruby${tty_reset}
+
+This install script (forked from Homebrew) with aarch64 support
+
+  - ${tty_underline}https://github.com/YOU54F/install${tty_reset}
+EOS
+    )
+"
+  elif [[ "${UNAME_MACHINE}" != "x86_64" && "${UNAME_MACHINE}" != "aarch64" ]]
+  then
     abort "$(
       cat <<EOABORT
-Homebrew on Linux is not supported on ARM processors.
-  ${tty_underline}https://docs.brew.sh/Homebrew-on-Linux#arm-unsupported${tty_reset}
+Homebrew on Linux is only officially supported on Intel processors!
+and unofficially supported on aarch64 processors!
 EOABORT
     )"
-  elif [[ "${UNAME_MACHINE}" != "x86_64" ]]
-  then
-    abort "Homebrew on Linux is only supported on Intel processors!"
   fi
 fi
 
@@ -833,28 +849,28 @@ EOABORT
   )"
 fi
 
-USABLE_GIT=/usr/bin/git
-if [[ -n "${HOMEBREW_ON_LINUX-}" ]]
+USABLE_GIT="$(command -v git)"
+if [[ -z "${USABLE_GIT}" ]]
 then
-  USABLE_GIT="$(find_tool git)"
-  if [[ -z "$(command -v git)" ]]
+  abort "$(
+    cat <<EOABORT
+You must install Git before installing Homebrew. See:
+  ${tty_underline}https://docs.brew.sh/Installation${tty_reset}
+EOABORT
+  )"
+elif [[ -n "${HOMEBREW_ON_LINUX-}" ]]
+then
+  suitable_git="$(find_tool git)"
+  if [[ -z "${suitable_git}" ]]
   then
     abort "$(
       cat <<EOABORT
-  You must install Git before installing Homebrew. See:
-    ${tty_underline}https://docs.brew.sh/Installation${tty_reset}
+The version of Git that was found does not satisfy requirements for Homebrew.
+Please install Git ${REQUIRED_GIT_VERSION} or newer and add it to your PATH.
 EOABORT
     )"
   fi
-  if [[ -z "${USABLE_GIT}" ]]
-  then
-    abort "$(
-      cat <<EOABORT
-  The version of Git that was found does not satisfy requirements for Homebrew.
-  Please install Git ${REQUIRED_GIT_VERSION} or newer and add it to your PATH.
-EOABORT
-    )"
-  fi
+  USABLE_GIT="${suitable_git}"
   if [[ "${USABLE_GIT}" != /usr/bin/git ]]
   then
     export HOMEBREW_GIT_PATH="${USABLE_GIT}"

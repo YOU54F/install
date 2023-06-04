@@ -1,0 +1,57 @@
+
+ruby_test_script: &ruby_test_script |
+  uname -a
+  ruby --version
+  gem --version
+
+install_homebrew_script: &install_homebrew_script |
+  /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v 2.6.10
+  echo 'export PATH=/root/.travelling-ruby/bin:${PATH}' >> /root/.profile
+  source /root/.profile
+  ruby --version
+  which ruby
+  echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /root/.profile
+  HOMEBREW_BREW_GIT_REMOTE="https://github.com/you54f/brew" NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/you54f/install/HEAD/install.sh)" 
+  source /root/.profile
+  ## Check Brew works and is using our system ruby
+  which ruby
+  ruby --version
+  brew --version
+  brew config
+  brew doctor || echo "brew doctor failed as expected with suspicious remote"
+  brew upgrade
+
+  ## Reset our HomeBrew git remote back to the official one
+  git -C "/home/linuxbrew/.linuxbrew/Homebrew" remote set-url origin https://github.com/Homebrew/brew
+
+  which ruby
+  ruby --version
+  brew config
+  brew --version
+  brew doctor || echo "brew doctor failed with warning about unsupported architecture"
+  brew upgrade
+  export PATH=/root/.travelling-ruby/bin:${PATH}:/home/linuxbrew/.linuxbrew/bin
+  echo "PATH=${PATH}" >>$CIRRUS_ENV
+
+test_homebrew_script: &test_homebrew_script |
+  brew install you54f/pact/pact-plugin-cli
+  brew info you54f/pact/pact-plugin-cli
+  pact-plugin-cli --help
+
+run_commands: &run_commands
+  # curl required for downloader, build-essential/git required for linuxbrew
+  pre_req_script: apt update && apt install --yes curl build-essential git 
+  cli_install_script: /bin/sh -c 'curl -fsSL https://gist.githubusercontent.com/YOU54F/2e47eb0b653b6810dd6a0be9fc6820ea/raw/install.sh' | sh -s -- --ci -v 2.6.10
+  ruby_test_script: *ruby_test_script
+  install_homebrew_script: *install_homebrew_script
+  test_homebrew_script: *test_homebrew_script
+
+cli_arm_task:
+  arm_container:
+    image: ubuntu:22.04
+  <<: *run_commands
+
+cli_amd_task:
+  container:
+    image: ubuntu:22.04
+  <<: *run_commands
